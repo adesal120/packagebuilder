@@ -1,14 +1,9 @@
-const editPackage = (pkg) => {
-    setSelectedAttractions(pkg.attractions);
-    setEditingPackage(pkg.id);
-    setPackages(packages.filter(p => p.id !== pkg.id));
-  };import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Mail, Trash2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import React, { useState } from 'react';
+import { Card, CardContent } from './components/ui/card';
+import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./components/ui/dialog";
 
 const attractions = [
   { id: 1, name: 'Serengeti National Park', type: 'Park' },
@@ -23,7 +18,7 @@ const currencies = [
   { value: 'EUR', symbol: '€' },
 ];
 
-const TourPackageBuilder = () => {
+function App() {
   const [packages, setPackages] = useState([]);
   const [selectedAttractions, setSelectedAttractions] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -31,7 +26,9 @@ const TourPackageBuilder = () => {
   const [customerDetails, setCustomerDetails] = useState({ name: '', email: '' });
   const [currentAttraction, setCurrentAttraction] = useState(null);
   const [attractionDetails, setAttractionDetails] = useState({ days: '', price: '', currency: 'USD' });
-  
+  const [editingAttractionIndex, setEditingAttractionIndex] = useState(null);
+  const [editingPackage, setEditingPackage] = useState(null);
+
   const handleDragStart = (e, attraction) => {
     e.dataTransfer.setData('attraction', JSON.stringify(attraction));
   };
@@ -59,9 +56,6 @@ const TourPackageBuilder = () => {
     setAttractionDetails({ days: '', price: '', currency: 'USD' });
   };
 
-  const [editingAttractionIndex, setEditingAttractionIndex] = useState(null);
-  const [editingPackage, setEditingPackage] = useState(null);
-
   const editAttraction = (index) => {
     const attraction = selectedAttractions[index];
     setCurrentAttraction(attraction);
@@ -73,6 +67,12 @@ const TourPackageBuilder = () => {
     });
     setEditingAttractionIndex(index);
     setSelectedAttractions(selectedAttractions.filter((_, i) => i !== index));
+  };
+
+  const editPackage = (pkg) => {
+    setSelectedAttractions(pkg.attractions);
+    setEditingPackage(pkg.id);
+    setPackages(packages.filter(p => p.id !== pkg.id));
   };
 
   const generatePackage = () => {
@@ -95,13 +95,11 @@ const TourPackageBuilder = () => {
           }
         });
 
-        // Convert remaining hours to days if >= 16
         if (totalHours >= 16) {
           totalDays += 1;
           totalHours = 0;
         }
 
-        // Round up hours to nearest integer
         totalHours = Math.ceil(totalHours);
 
         if (totalDays > 0 && totalHours > 0) {
@@ -128,7 +126,6 @@ const TourPackageBuilder = () => {
       const newPackage = {
         id: Date.now(),
         attractions: [...selectedAttractions],
-        totalDays,
         prices: pricesByCurrency,
         description: `
           🌟 Tanzania Adventure Package
@@ -221,7 +218,7 @@ const TourPackageBuilder = () => {
                         variant="outline"
                         onClick={() => setCurrentAttraction(null)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        Delete
                       </Button>
                     </div>
                     <div className="space-y-2">
@@ -274,13 +271,7 @@ const TourPackageBuilder = () => {
                       onClick={addAttractionToPackage}
                       disabled={!attractionDetails.days || !attractionDetails.price}
                     >
-                      <Button 
-                      className="w-full"
-                      onClick={addAttractionToPackage}
-                      disabled={!attractionDetails.days || !attractionDetails.price}
-                    >
                       {editingAttractionIndex !== null ? 'Save Changes' : 'Add to Package'}
-                    </Button>
                     </Button>
                   </CardContent>
                 </Card>
@@ -299,7 +290,7 @@ const TourPackageBuilder = () => {
                           <div>
                             <h3 className="font-semibold">{attraction.name}</h3>
                             <p className="text-sm text-gray-600">
-                              {attraction.days} {attraction.durationType} 
+                              {attraction.days} {attraction.durationType} | 
                               {currencies.find(c => c.value === attraction.currency).symbol}
                               {attraction.price} {attraction.currency}
                             </p>
@@ -318,7 +309,7 @@ const TourPackageBuilder = () => {
                               variant="outline"
                               onClick={() => setSelectedAttractions(selectedAttractions.filter((_, i) => i !== index))}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              Delete
                             </Button>
                           </div>
                         </div>
@@ -334,14 +325,7 @@ const TourPackageBuilder = () => {
               onClick={generatePackage}
               disabled={selectedAttractions.length === 0 || isGenerating}
             >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating Package...
-                </>
-              ) : (
-                'Generate Package'
-              )}
+              {isGenerating ? 'Generating Package...' : 'Generate Package'}
             </Button>
           </div>
         </div>
@@ -352,10 +336,7 @@ const TourPackageBuilder = () => {
             {packages.length > 0 && (
               <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
                 <DialogTrigger asChild>
-                  <Button>
-                    <Mail className="h-4 w-4 mr-2" />
-                    Send Packages
-                  </Button>
+                  <Button>Send Packages</Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
@@ -404,7 +385,7 @@ const TourPackageBuilder = () => {
                         variant="outline"
                         onClick={() => deletePackage(pkg.id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        Delete
                       </Button>
                     </div>
                   </div>
@@ -419,6 +400,6 @@ const TourPackageBuilder = () => {
       </div>
     </div>
   );
-};
+}
 
-export default TourPackageBuilder;
+export default App;
